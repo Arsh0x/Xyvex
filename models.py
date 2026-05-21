@@ -1,57 +1,65 @@
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime
+from sqlalchemy.orm import relationship
+from database import Base
+from datetime import datetime
 from typing import Optional, List
 
+class Finding(Base):
+    __tablename__ = "findings"
 
-class Findings():
-    def __init__(self, title: str, severity: str, notes: Optional[str] = None) -> None:
-        self.title = title
-        self.severity = severity
-        self.notes = notes
-        self.is_confirmed: bool = False
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    severity = Column(String, nullable=False)
+    notes = Column(String, nullable=True)
+    is_confirmed = Column(Boolean, default=False)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
-    def confirm(self)->None:
-        self.is_confirmed = True
+    project = relationship("Project", back_populates="findings")
 
-    def to_dict(self)-> dict:
+    def to_dict(self):
         return {
+            "id": self.id,
             "title": self.title,
             "severity": self.severity,
             "notes": self.notes,
-            "is_confirmed": self.is_confirmed
-        }  
-    
-
-class Payload():
-    def __init__(self,name: str, content: str, category: str):
-        self.name = name
-        self.content = content
-        self.category = category
-
-
-    def to_dict(self)-> dict:
-        return {
-            "name" : self.name,
-            "content" : self.content,
-            "category" : self.category
+            "is_confirmed": self.is_confirmed,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
         }
-    
 
-class Project:
-    def __init__(self, name: str, target: str):
-        self.name = name
-        self.target = target
-        self.findings: List[Findings] = []
-        self.payloads: List[Payload] = []
+class Payload(Base):
+    __tablename__ = "payloads"
 
-    def add_finding(self, finding: Findings) -> None:
-        self.findings.append(finding)
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    content = Column(String, nullable=False)
+    category = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
-    def add_payload(self, payload: Payload) -> None:
-        self.payloads.append(payload)
-
-    def to_dict(self) -> dict:
+    def to_dict(self):
         return {
+            "id": self.id,
+            "name": self.name,
+            "content": self.content,
+            "category": self.category,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+class Project(Base):
+    __tablename__ = "projects"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    target = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    findings = relationship("Finding", back_populates="project", cascade="all, delete-orphan")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
             "name": self.name,
             "target": self.target,
             "findings": [f.to_dict() for f in self.findings],
-            "payloads": [p.to_dict() for p in self.payloads],
+            "created_at": self.created_at.isoformat() if self.created_at else None,
         }
