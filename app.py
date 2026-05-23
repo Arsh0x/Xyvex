@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, Header
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from database import engine, get_db, Base
 from models import Project, Finding, Payload, User
@@ -10,6 +11,14 @@ import models
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def get_current_user(authorization: Optional[str] = Header(None), db: Session = Depends(get_db)) -> User:
     if not authorization or not authorization.startswith("Bearer "):
