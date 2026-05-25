@@ -32,6 +32,8 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 def decode_token(token: str) -> dict:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        print("decoded payload:", payload)
         return payload
-    except JWTError:
+    except JWTError as e:
+        print("JWT error:", e)
         return None
